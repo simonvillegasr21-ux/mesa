@@ -236,11 +236,42 @@
         let apiKey = '';
         let conversationHistory = [];
 
-        /* Módulo 2 → RAG: base de conocimiento (vacío por ahora) */
-        const knowledgeBase = {}; 
+        /* MÓDULO 2 — RAG (base de conocimiento): */
+        let KNOWLEDGE_BASE = "";
 
-        /* Módulo 3 → System Prompt: reglas del asistente (vacío por ahora) */
-        const SYSTEM_PROMPT = "";
+        async function loadKnowledgeBase() {
+            try {
+                const response = await fetch('./catalogo.txt');
+                if (!response.ok) throw new Error("Archivo de catálogo no encontrado.");
+                KNOWLEDGE_BASE = await response.text();
+                
+                // Una vez cargada la base, construimos el System Prompt
+                updateSystemPrompt();
+                console.log("Base de conocimiento cargada con éxito.");
+            } catch (error) {
+                console.error("Error al cargar RAG:", error);
+                addMessage('bot', "Error: No se pudo cargar la base de conocimiento (catalogo.txt).");
+            }
+        }
+
+        // Ejecución automática al cargar la página
+        window.onload = loadKnowledgeBase;
+
+        /* MÓDULO 3 — System Prompt: */
+        let SYSTEM_PROMPT = "";
+
+        function updateSystemPrompt() {
+            SYSTEM_PROMPT = `Eres el asistente de FRZN.
+
+REGLAS CRÍTICAS:
+1. Responde ÚNICAMENTE usando la información del catálogo proporcionado.
+2. Si la información no está en el catálogo, di: "Esa información no está disponible. Te recomiendo contactar directamente con FRZN."
+3. Tono: profesional y conciso.
+4. Nunca inventes datos que no estén en el catálogo.
+
+BASE DE CONOCIMIENTO:
+${KNOWLEDGE_BASE}`;
+        }
 
         /* Módulo 4 → API Key: función saveApiKey() */
         function saveApiKey() {
